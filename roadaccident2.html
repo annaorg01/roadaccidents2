@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>לוח מחוונים - תאונות דרכים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap RTL -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        rel="stylesheet"
+    >
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at top, #eef2ff 0, #f8fafc 35%, #f1f5f9 100%);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #0f172a;
+        }
+
+        .dashboard-header {
+            padding: 1.5rem 0 1.2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .dashboard-subtitle {
+            color: #64748b;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: 0.35rem .85rem;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, .08);
+            color: #1d4ed8;
+            font-size: .86rem;
+            font-weight: 500;
+        }
+
+        .chip i {
+            font-size: 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1.1rem;
+            box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+        }
+
+        .card-soft {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+        }
+
+        .card-soft-2 {
+            background: linear-gradient(135deg, #ffffff, #e0f2fe);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.06);
+            margin-left: .75rem;
+        }
+
+        .stat-number {
+            font-size: 1.9rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: .95rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: .3rem;
+        }
+
+        .section-subtitle {
+            color: #94a3b8;
+            font-size: .85rem;
+        }
+
+        .table-container {
+            max-height: 540px;
+            overflow: auto;
+            border-radius: 0 0 1.1rem 1.1rem;
+        }
+
+        .table thead th {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            font-size: .85rem;
+        }
+
+        .table tbody td {
+            font-size: .9rem;
+        }
+
+        .badge-district {
+            font-size: .75rem;
+            padding: .25rem .55rem;
+            border-radius: 999px;
+        }
+
+        .search-input {
+            max-width: 260px;
+        }
+
+        .sticky-sidebar {
+            position: static;
+        }
+
+        @media (min-width: 992px) {
+            .sticky-sidebar {
+                position: sticky;
+                top: 1.1rem;
+            }
+        }
+
+        .chart-card {
+            height: 260px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 180px;
+        }
+
+        .pill-filter {
+            border-radius: 999px;
+        }
+
+        .table-highlight {
+            box-shadow: inset 0 0 0 1px #2563eb33;
+            background-color: #eff6ff !important;
+        }
+
+        .toolbar {
+            gap: .5rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 1.6rem;
+            }
+            .table-container {
+                max-height: 380px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid px-3 px-md-4 px-lg-5 py-2">
+
+        <!-- Header -->
+        <header class="dashboard-header border-bottom border-0 border-bottom border-slate-200 mb-3">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div>
+                    <div class="dashboard-title d-flex align-items-center gap-2">
+                        <i class="bi bi-traffic-cone text-warning"></i>
+                        לוח מחוונים – תאונות דרכים
+                    </div>
+                    <div class="dashboard-subtitle mt-1">
+                        ניתוח תאונות דרכים לפי רשות מקומית ומחוז, חודש יוני 2025
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="chip">
+                        <i class="bi bi-activity"></i>
+                        נתונים מעובדים
+                    </span>
+                    <button class="btn btn-outline-secondary btn-sm pill-filter" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-repeat ms-1"></i> רענון
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Top stats -->
+        <section class="mb-3">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="card card-soft h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-indigo-50">
+                                <i class="bi bi-car-front-fill"></i>
+                            </div>
+                            <div>
+                                <div class="stat-label mb-1">סה״כ תאונות מדווחות</div>
+                                <div class="stat-number" id="totalAccidents">255,155</div>
+                                <div class="small text-muted">
+                                    בכל הרשויות המקומיות בסט הנתונים
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card card-soft-2 h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="bi bi-hospital"></i>
+                            </div>
+                            <div>
+                                <div class="stat-label mb-1">סה״כ נפגעים (הערכה)</div>
+                                <div class="stat-number" id="totalCasualties">354,154</div>
+                                <div class="small text-muted">
+                                    כולל הרוגים, פצועים קשה, בינוני וקל
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <div class="stat-label mb-1">רשויות / ערים</div>
+                                <div class="stat-number" id="totalMunicipalities">1,129</div>
+                                <div class="small text-muted">
+                                    מספר רשויות/יישובים המופיעים בקובץ הנתונים
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main layout: table + sticky charts -->
+        <section>
+            <div class="row g-3">
+                <!-- Left: table and filters -->
+                <div class="col-12 col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-body pb-2">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div>
+                                    <div class="section-title mb-0">
+                                        נתונים לפי רשות מקומית
+                                    </div>
+                                    <div class="section-subtitle">
+                                        חיפוש, סינון ובחירה של רשות ספציפית
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center toolbar">
+                                    <div class="input-group input-group-sm search-input">
+                                        <span class="input-group-text bg-light border-0">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input
+                                            id="searchInput"
+                                            type="text"
+                                            class="form-control border-0"
+                                            placeholder="חיפוש לפי שם רשות או מחוז..."
+                                        >
+                                    </div>
+                                    <select id="municipalitySelect" class="form-select form-select-sm pill-filter">
+                                        <option value="">כל הרשויות</option>
+                                        <!-- יתמלא דינמית -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="table table-hover align-middle mb-0" id="municipalTable">
+                                <thead>
+                                <tr>
+                                    <th>רשות / עיר</th>
+                                    <th>מחוז</th>
+                                    <th class="text-center">סה״כ תאונות</th>
+                                    <th class="text-center">סה״כ נפגעים</th>
+                                    <th class="text-center">הרוגים</th>
+                                    <th class="text-center">פצועים קשה</th>
+                                    <th class="text-center">פצועים בינוני</th>
+                                    <th class="text-center">פצועים קל</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- דוגמאות – אפשר להחליף בנתונים אמיתיים מה-CSV -->
+                                <tr>
+                                    <td>תל אביב - יפו</td>
+                                    <td><span class="badge bg-primary-subtle text-primary-emphasis badge-district">תל אביב</span></td>
+                                    <td class="text-center" data-field="accidents">20747</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>ירושלים</td>
+                                    <td><span class="badge bg-success-subtle text-success-emphasis badge-district">ירושלים</span></td>
+                                    <td class="text-center" data-field="accidents">17108</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>חיפה</td>
+                                    <td><span class="badge bg-info-subtle text-info-emphasis badge-district">חיפה</span></td>
+                                    <td class="text-center" data-field="accidents">10568</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>ראשון לציון</td>
+                                    <td><span class="badge bg-primary-subtle text-primary-emphasis badge-district">מרכז</span></td>
+                                    <td class="text-center" data-field="accidents">8028</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>יהודה ושומרון</td>
+                                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis badge-district">לא ידוע / מעורב</span></td>
+                                    <td class="text-center" data-field="accidents">7791</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>פתח תקווה</td>
+                                    <td><span class="badge bg-primary-subtle text-primary-emphasis badge-district">מרכז</span></td>
+                                    <td class="text-center" data-field="accidents">6862</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>באר שבע</td>
+                                    <td><span class="badge bg-warning-subtle text-warning-emphasis badge-district">דרום</span></td>
+                                    <td class="text-center" data-field="accidents">6844</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>אשדוד</td>
+                                    <td><span class="badge bg-warning-subtle text-warning-emphasis badge-district">דרום</span></td>
+                                    <td class="text-center" data-field="accidents">6423</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>חולון</td>
+                                    <td><span class="badge bg-primary-subtle text-primary-emphasis badge-district">מרכז</span></td>
+                                    <td class="text-center" data-field="accidents">5908</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                <tr>
+                                    <td>אשקלון</td>
+                                    <td><span class="badge bg-warning-subtle text-warning-emphasis badge-district">דרום</span></td>
+                                    <td class="text-center" data-field="accidents">5623</td>
+                                    <td class="text-center" data-field="casualties">-</td>
+                                    <td class="text-center" data-field="killed">-</td>
+                                    <td class="text-center" data-field="severe">-</td>
+                                    <td class="text-center" data-field="moderate">-</td>
+                                    <td class="text-center" data-field="light">-</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-3 py-2 small text-muted">
+                            לעבודה מלאה עם כל הרשויות .
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: sticky charts & selected municipality -->
+                <div class="col-12 col-lg-4">
+                    <div class="sticky-sidebar d-flex flex-column gap-3">
+                        <!-- Selected municipality card -->
+                        <div class="card card-soft">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <div class="section-title mb-0">רשות נבחרת</div>
+                                        <div class="section-subtitle" id="selectedMunicipalitySubtitle">
+                                            בחר רשות מהרשימה כדי לראות נתונים מרוכזים
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-pin-angle-fill text-primary"></i>
+                                </div>
+                                <div id="selectedMunicipalityPanel" class="mt-2" style="display:none;">
+                                    <div class="fw-semibold mb-1" id="selectedMunicipalityName"></div>
+                                    <div class="d-flex flex-wrap gap-2 small">
+                                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">
+                                            תאונות: <span id="selectedAccidents">0</span>
+                                        </span>
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">
+                                            הרוגים: <span id="selectedKilled">0</span>
+                                        </span>
+                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">
+                                            קשה: <span id="selectedSevere">0</span>
+                                        </span>
+                                        <span class="badge rounded-pill bg-orange-subtle text-orange-emphasis">
+                                            בינוני: <span id="selectedModerate">0</span>
+                                        </span>
+                                        <span class="badge rounded-pill bg-success-subtle text-success-emphasis">
+                                            קל: <span id="selectedLight">0</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="card chart-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <div class="section-title mb-0">התפלגות תאונות לפי מחוז</div>
+                                        <div class="section-subtitle">סך התאונות בכל מחוז</div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="districtChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card chart-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <div class="section-title mb-0">10 הרשויות המובילות</div>
+                                        <div class="section-subtitle">לפי מספר תאונות</div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="topCitiesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // ------------------------
+        // נתוני גרפים (דוגמה)
+        // ------------------------
+        const districtLabels = ['מרכז', 'צפון', 'תל אביב', 'דרום', 'חיפה', 'ירושלים', 'לא ידוע'];
+        const districtValues = [61193, 49206, 46066, 36210, 32602, 21502, 8376];
+
+        const topCityLabels = [
+            'תל אביב - יפו',
+            'ירושלים',
+            'חיפה',
+            'ראשון לציון',
+            'יהודה ושומרון',
+            'פתח תקווה',
+            'באר שבע',
+            'אשדוד',
+            'חולון',
+            'אשקלון'
+        ];
+        const topCityValues = [20747, 17108, 10568, 8028, 7791, 6862, 6844, 6423, 5908, 5623];
+
+        // ------------------------
+        // יצירת גרפים (מקובעים בסיידבר)
+        // ------------------------
+        const districtCtx = document.getElementById('districtChart').getContext('2d');
+        new Chart(districtCtx, {
+            type: 'bar',
+            data: {
+                labels: districtLabels,
+                datasets: [{
+                    label: 'מספר תאונות',
+                    data: districtValues,
+                    backgroundColor: 'rgba(37, 99, 235, 0.55)',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'x',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function (ctx) {
+                                const v = ctx.parsed.y ?? ctx.parsed.x;
+                                return 'תאונות: ' + v.toLocaleString('he-IL');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { font: { family: 'system-ui', size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: 65000, // סקאלה מקובעת
+                        ticks: {
+                            callback: v => v.toLocaleString('he-IL'),
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+
+        const topCitiesCtx = document.getElementById('topCitiesChart').getContext('2d');
+        new Chart(topCitiesCtx, {
+            type: 'bar',
+            data: {
+                labels: topCityLabels,
+                datasets: [{
+                    label: 'מספר תאונות',
+                    data: topCityValues,
+                    backgroundColor: 'rgba(249, 115, 22, 0.6)',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function (ctx) {
+                                const v = ctx.parsed.x ?? ctx.parsed.y;
+                                return 'תאונות: ' + v.toLocaleString('he-IL');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        suggestedMax: 22000, // סקאלה מקובעת
+                        ticks: {
+                            callback: v => v.toLocaleString('he-IL'),
+                            font: { size: 10 }
+                        }
+                    },
+                    y: {
+                        ticks: { font: { family: 'system-ui', size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // ------------------------
+        // חיפוש בטבלה
+        // ------------------------
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('municipalTable');
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim().toLowerCase();
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+
+        // ------------------------
+        // דרופ־דאון רשויות + פאנל רשות נבחרת
+        // ------------------------
+        const municipalitySelect = document.getElementById('municipalitySelect');
+        const selectedPanel = document.getElementById('selectedMunicipalityPanel');
+        const selectedName = document.getElementById('selectedMunicipalityName');
+        const selectedAccidents = document.getElementById('selectedAccidents');
+        const selectedKilled = document.getElementById('selectedKilled');
+        const selectedSevere = document.getElementById('selectedSevere');
+        const selectedModerate = document.getElementById('selectedModerate');
+        const selectedLight = document.getElementById('selectedLight');
+        const selectedSubtitle = document.getElementById('selectedMunicipalitySubtitle');
+
+        // מילוי רשימת הרשויות מתוך הטבלה
+        const municipalitySet = new Set();
+        rows.forEach(row => {
+            const nameCell = row.cells[0];
+            if (nameCell) {
+                municipalitySet.add(nameCell.textContent.trim());
+            }
+        });
+
+        Array.from(municipalitySet).sort().forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            municipalitySelect.appendChild(opt);
+        });
+
+        function clearRowHighlight() {
+            rows.forEach(row => row.classList.remove('table-highlight'));
+        }
+
+        municipalitySelect.addEventListener('change', function () {
+            const value = this.value;
+            clearRowHighlight();
+            if (!value) {
+                // הצגת כל הרשומות
+                rows.forEach(row => row.style.display = '');
+                selectedPanel.style.display = 'none';
+                selectedSubtitle.textContent = 'בחר רשות מהרשימה כדי לראות נתונים מרוכזים';
+                return;
+            }
+
+            // הצגת רק הרשודה הרלוונטית
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.trim();
+                const match = name === value;
+                row.style.display = match ? '' : 'none';
+                if (match) {
+                    row.classList.add('table-highlight');
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const getValue = (fieldName) => {
+                        const cell = row.querySelector(`[data-field="${fieldName}"]`);
+                        if (!cell) return 0;
+                        const raw = cell.textContent.trim().replace(/,/g, '');
+                        const num = parseInt(raw, 10);
+                        return isNaN(num) ? 0 : num;
+                    };
+
+                    const accidentsVal = getValue('accidents');
+                    const killedVal = getValue('killed');
+                    const severeVal = getValue('severe');
+                    const moderateVal = getValue('moderate');
+                    const lightVal = getValue('light');
+
+                    selectedName.textContent = value;
+                    selectedAccidents.textContent = accidentsVal.toLocaleString('he-IL');
+                    selectedKilled.textContent = killedVal.toLocaleString('he-IL');
+                    selectedSevere.textContent = severeVal.toLocaleString('he-IL');
+                    selectedModerate.textContent = moderateVal.toLocaleString('he-IL');
+                    selectedLight.textContent = lightVal.toLocaleString('he-IL');
+
+                    selectedPanel.style.display = 'block';
+                    selectedSubtitle.textContent = 'תקציר נתונים לרשות הנבחרת';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
